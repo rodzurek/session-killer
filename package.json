@@ -4,23 +4,32 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "build:exe": "node scripts/build-exe.js"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "caxa": "^3.0.1",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Service {
+  id        Int     @id @default(autoincrement())
+  name      String
+  category  String
+  sortOrder Int     @default(0) @map("sort_order")
+  isBuiltin Boolean @default(true) @map("is_builtin")
+  tasks     Task[]
+
+  @@map("services")
+}
+
+model Task {
+  id          Int         @id @default(autoincrement())
+  serviceId   Int         @map("service_id")
+  label       String
+  description String?
+  url         String?
+  sortOrder   Int         @default(0) @map("sort_order")
+  service     Service     @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  completion  Completion?
+
+  @@map("tasks")
+}
+
+model Completion {
+  id          Int      @id @default(autoincrement())
+  taskId      Int      @unique @map("task_id")
+  completedAt DateTime @default(now()) @map("completed_at")
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("completions")
+}

@@ -7,7 +7,7 @@ export async function DELETE(
 ) {
   const { id } = await params
   try {
-    deleteService(Number(id))
+    await deleteService(Number(id))
     return NextResponse.json({ ok: true })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'error'

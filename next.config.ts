@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  allowedDevOrigins: ['local.sfvault.app'],
+};
 
 export default nextConfig;
-
-module.exports = {
-    allowedDevOrigins: ['local.sfvault.app'],
-}

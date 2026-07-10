@@ -41,7 +41,7 @@ function CopyButton({ url }: { url: string }) {
 }
 
 export default function ServiceCard({ service, onToggle, onDelete }: Props) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const done = service.tasks.filter(t => t.completed).length
   const total = service.tasks.length
   const allDone = total > 0 && done === total

@@ -6,6 +6,6 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  toggleTask(Number(id))
+  await toggleTask(Number(id))
   return NextResponse.json({ ok: true })
 }

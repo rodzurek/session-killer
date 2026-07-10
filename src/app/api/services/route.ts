@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServices, addService } from '@/lib/db'
 
 export async function GET() {
-  const services = getServices()
+  const services = await getServices()
   return NextResponse.json(services)
 }
 
@@ -11,6 +11,6 @@ export async function POST(req: Request) {
   const name = body?.name?.trim()
   if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 })
 
-  const id = addService(name)
+  const id = await addService(name)
   return NextResponse.json({ id })
 }
