@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session Killer</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #111827;
+    --muted: #6b7280;
+    --faint: #9ca3af;
+    --border: #e5e7eb;
+    --border-soft: #f3f4f6;
+    --surface-hover: #f9fafb;
+    --violet: #8b5cf6;
+    --violet-strong: #7c3aed;
+    --violet-text: #7c3aed;
+    --green: #22c55e;
+    --green-text: #16a34a;
+    --red: #ef4444;
+    --chip-bg: #f3f4f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #030712;
+      --fg: #f3f4f6;
+      --muted: #9ca3af;
+      --faint: #6b7280;
+      --border: #374151;
+      --border-soft: rgba(31,41,55,.6);
+      --surface-hover: rgba(31,41,55,.5);
+      --violet-text: #a78bfa;
+      --green-text: #4ade80;
+      --chip-bg: #374151;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  button { font: inherit; cursor: pointer; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  header h1 .dot { color: var(--red); }
+  header p {
+    font-size: .75rem;
+    color: var(--muted);
+    margin: .125rem 0 0;
+  }
+  .header-actions { display: flex; align-items: center; gap: .5rem; }
+  .confirm-wrap {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .875rem;
+    color: var(--muted);
+  }
+
+  .btn {
+    padding: .375rem .75rem;
+    border-radius: .375rem;
+    font-size: .75rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: inherit;
+    transition: background-color .15s, border-color .15s, color .15s;
+  }
+  .btn:hover { background: var(--surface-hover); }
+  .btn-danger {
+    background: var(--red);
+    border-color: var(--red);
+    color: #fff;
+  }
+  .btn-danger:hover { background: #dc2626; border-color: #dc2626; }
+
+  .progress-wrap {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .track {
+    height: 6px;
+    background: var(--chip-bg);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: .5rem;
+  }
+  .bar {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--violet);
+    transition: width .3s ease, background-color .3s ease;
+  }
+  .bar.done { background: var(--green); }
+  .progress-label { font-size: .75rem; color: var(--faint); margin: 0; }
+
+  main { max-width: 42rem; padding: 1.5rem; }
+  section { margin-bottom: 2rem; }
+  section h2 {
+    font-size: .6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--faint);
+    margin: 0 0 .75rem;
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+  }
+  .cards { display: flex; flex-direction: column; gap: .5rem; }
+
+  .card {
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    transition: border-color .15s, background-color .15s;
+  }
+  .card.all-done {
+    border-color: rgba(34,197,94,.3);
+    background: rgba(34,197,94,.05);
+  }
+  .card-head {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1rem;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: .5rem;
+    color: inherit;
+    transition: background-color .15s;
+  }
+  .card-head:hover { background: var(--surface-hover); }
+  .card-name {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 500;
+  }
+  .check-mark { color: var(--green); font-size: .875rem; font-weight: 700; }
+  .card-meta { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+  .chip {
+    font-size: .75rem;
+    font-weight: 600;
+    padding: .125rem .5rem;
+    border-radius: 999px;
+    background: var(--chip-bg);
+    color: var(--muted);
+  }
+  .chip.done { background: rgba(34,197,94,.2); color: var(--green-text); }
+  .del {
+    background: none;
+    border: 0;
+    color: var(--faint);
+    font-size: 1.125rem;
+    line-height: 1;
+    padding: 0 .25rem;
+    transition: color .15s;
+  }
+  .del:hover { color: var(--red); }
+  .caret { color: var(--faint); font-size: .75rem; }
+
+  ul.tasks { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border-soft); }
+  ul.tasks li {
+    padding: .625rem 1rem;
+    border-bottom: 1px solid var(--border-soft);
+    transition: opacity .15s;
+  }
+  ul.tasks li:last-child { border-bottom: 0; }
+  ul.tasks li.completed { opacity: .5; }
+  .task-row { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; }
+  .task-main {
+    display: flex;
+    align-items: flex-start;
+    gap: .625rem;
+    cursor: pointer;
+    flex: 1;
+    min-width: 0;
+  }
+  .task-main input[type=checkbox] {
+    margin-top: .125rem;
+    height: 1rem;
+    width: 1rem;
+    flex-shrink: 0;
+    accent-color: var(--violet);
+    cursor: pointer;
+  }
+  .task-label { font-size: .875rem; }
+  a.task-label {
+    color: var(--violet-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .completed .task-label { text-decoration-line: line-through; }
+  .task-desc {
+    margin: .25rem 0 0 1.5rem;
+    font-size: .75rem;
+    color: var(--faint);
+    line-height: 1.5;
+  }
+
+  .copy {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    padding: .125rem .375rem;
+    border: 0;
+    border-radius: .25rem;
+    background: transparent;
+    font-size: .75rem;
+    color: var(--faint);
+    transition: color .15s, background-color .15s;
+    flex-shrink: 0;
+  }
+  .copy:hover { color: var(--fg); background: var(--chip-bg); }
+  .copy.copied { color: var(--green); }
+  .copy svg { width: .75rem; height: .75rem; }
+
+  .add-wrap { padding-bottom: 2.5rem; }
+  .add-form { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  .add-form input[type=text] {
+    flex: 1;
+    min-width: 200px;
+    padding: .5rem .75rem;
+    font: inherit;
+    font-size: .875rem;
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    background: var(--bg);
+    color: inherit;
+  }
+  .add-form input[type=text]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--violet);
+    border-color: transparent;
+  }
+  .btn-primary {
+    padding: .5rem .75rem;
+    font-size: .875rem;
+    font-weight: 500;
+    border: 0;
+    border-radius: .375rem;
+    background: var(--violet);
+    color: #fff;
+    transition: background-color .15s;
+  }
+  .btn-primary:hover { background: var(--violet-strong); }
+  .btn-plain {
+    padding: .5rem .75rem;
+    font-size: .875rem;
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    background: transparent;
+    color: inherit;
+  }
+  .btn-plain:hover { background: var(--surface-hover); }
+  .btn-add {
+    padding: .5rem 1rem;
+    font-size: .875rem;
+    color: var(--violet-text);
+    border: 1px dashed var(--violet);
+    border-radius: .375rem;
+    background: transparent;
+    transition: background-color .15s;
+  }
+  .btn-add:hover { background: rgba(139,92,246,.1); }
+
+  .note {
+    max-width: 42rem;
+    padding: 0 1.5rem 2rem;
+    font-size: .75rem;
+    color: var(--faint);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1><span class="dot">&#9679;</span> Session Killer</h1>
+    <p>Session compromised &mdash; work through this checklist</p>
+  </div>
+  <div class="header-actions" id="headerActions"></div>
+</header>
+
+<div class="progress-wrap">
+  <div class="track"><div class="bar" id="bar"></div></div>
+  <p class="progress-label" id="progressLabel"></p>
+</div>
+
+<main id="app"></main>
+
+<p class="note">Standalone offline copy &mdash; nothing is saved. Reloading the page clears all progress.</p>
+
+<script>
+const CATEGORIES = {
+  email:     { label: 'Email',      emoji: '✉️' },
+  social:    { label: 'Social',     emoji: '🌐' },
+  dev:       { label: 'Dev / Code', emoji: '💻' },
+  financial: { label: 'Financial',  emoji: '💳' },
+  custom:    { label: 'Custom',     emoji: '⚙️' },
+};
+
+const SEED = [
+  { name: 'Gmail / Google', category: 'email', tasks: [
+    { label: 'Sign out all other sessions', description: 'myaccount.google.com → Security → Your devices', url: 'https://myaccount.google.com/device-activity' },
+    { label: 'Change password', description: 'myaccount.google.com → Security → Password', url: 'https://myaccount.google.com/signinoptions/password' },
+    { label: 'Enable 2-Step Verification', description: 'Use an authenticator app — avoid SMS if possible', url: 'https://myaccount.google.com/signinoptions/two-step-verification' },
+    { label: 'Check email forwarding rules', description: 'Gmail Settings → See all settings → Forwarding — remove unknown addresses', url: 'https://mail.google.com/mail/u/0/#settings/fwdandpop' },
+    { label: 'Review App Passwords', description: 'myaccount.google.com → Security → App Passwords — revoke all', url: 'https://myaccount.google.com/apppasswords' },
+    { label: 'Audit connected apps', description: 'myaccount.google.com → Security → Third-party apps with account access', url: 'https://myaccount.google.com/permissions' },
+  ]},
+  { name: 'Outlook / Microsoft', category: 'email', tasks: [
+    { label: 'Sign out all sessions', description: 'account.microsoft.com → Security → Sign-in activity', url: 'https://account.microsoft.com/security' },
+    { label: 'Change password', description: 'account.microsoft.com → Security → Change my password', url: 'https://account.microsoft.com/password/change' },
+    { label: 'Enable 2FA', description: 'account.microsoft.com → Security → Advanced security options', url: 'https://account.live.com/proofs/manage/additional' },
+    { label: 'Check email forwarding & rules', description: 'Outlook → Settings → Mail → Rules — remove unknown ones', url: 'https://outlook.live.com/mail/0/options/mail/rules' },
+    { label: 'Audit connected apps', description: 'account.microsoft.com → Privacy → Apps and services', url: 'https://account.microsoft.com/privacy/app-access' },
+  ]},
+  { name: 'Facebook', category: 'social', tasks: [
+    { label: 'Log out all active sessions', description: "Settings → Security and Login → Where You're Logged In → Log Out All", url: 'https://www.facebook.com/settings?tab=security&section=sessions' },
+    { label: 'Change password', description: 'Settings → Security and Login → Change Password', url: 'https://www.facebook.com/settings?tab=security&section=password' },
+    { label: 'Enable 2FA', description: 'Settings → Security and Login → Two-Factor Authentication', url: 'https://www.facebook.com/settings?tab=security&section=two_factor' },
+    { label: 'Revoke suspicious apps', description: 'Settings → Apps and Websites — remove unknown ones', url: 'https://www.facebook.com/settings?tab=applications' },
+    { label: 'Verify account email & phone', description: 'Settings → General — confirm recovery contacts are yours', url: 'https://www.facebook.com/settings?tab=account' },
+    { label: 'Review messages & archived chats for scams sent', description: 'Check Messenger for scam messages sent from your account — also check Archived chats', url: 'https://web.facebook.com/messages' },
+  ]},
+  { name: 'Twitter / X', category: 'social', tasks: [
+    { label: 'Revoke all sessions', description: 'Settings → Security and account access → Apps and sessions → Sessions', url: 'https://x.com/settings/sessions' },
+    { label: 'Change password', description: 'Settings → Your account → Change your password', url: 'https://x.com/settings/password' },
+    { label: 'Enable 2FA', description: 'Settings → Security and account access → Security → Two-factor authentication', url: 'https://x.com/settings/account/login_verification' },
+    { label: 'Revoke third-party apps', description: 'Settings → Security and account access → Connected apps', url: 'https://x.com/settings/connected_apps' },
+  ]},
+  { name: 'Instagram', category: 'social', tasks: [
+    { label: 'Log out all sessions', description: 'Settings → Security → Login Activity — log out all unknown sessions', url: 'https://www.instagram.com/accounts/login_activity/' },
+    { label: 'Change password', description: 'Settings → Security → Password', url: 'https://www.instagram.com/accounts/password/change/' },
+    { label: 'Enable 2FA', description: 'Settings → Security → Two-Factor Authentication', url: 'https://www.instagram.com/accounts/two_factor_authentication/' },
+    { label: 'Audit authorized apps', description: 'Settings → Security → Apps and Websites', url: 'https://www.instagram.com/accounts/manage_access/' },
+    { label: 'Review DMs for scams sent', description: 'Check Direct inbox for scam messages sent from your account — delete any found', url: 'https://www.instagram.com/direct/inbox/' },
+  ]},
+  { name: 'Discord', category: 'social', tasks: [
+    { label: 'Log out all other sessions', description: 'User Settings → Devices — end all unknown sessions', url: 'https://discord.com/settings/sessions' },
+    { label: 'Change password', description: 'User Settings → My Account → Change Password', url: 'https://discord.com/settings/account' },
+    { label: 'Enable 2FA', description: 'User Settings → My Account → Two-Factor Authentication', url: 'https://discord.com/settings/security' },
+    { label: 'Revoke authorized apps', description: 'User Settings → Authorized Apps — remove unknown ones', url: 'https://discord.com/settings/authorized-apps' },
+    { label: 'Review DMs for scam messages sent', description: 'Check Direct Messages for phishing or scam links sent from your account while compromised — notify affected users', url: 'https://discord.com/channels/@me' },
+  ]},
+  { name: 'WhatsApp', category: 'social', tasks: [
+    { label: 'Log out all linked devices', description: 'Open WhatsApp → tap ⋮ → Linked Devices → Log out of all devices', url: null },
+    { label: 'Enable 2-step verification', description: 'Open WhatsApp → Settings → Account → Two-step verification', url: null },
+    { label: 'Check privacy settings', description: 'Open WhatsApp → Settings → Privacy — restrict who can see your info', url: null },
+    { label: 'Change registered phone if compromised', description: 'Open WhatsApp → Settings → Account → Change number', url: null },
+    { label: 'Review chats for scam messages sent', description: 'Scroll through recent chats and groups for scam or phishing messages sent while compromised — warn affected contacts', url: null },
+  ]},
+  { name: 'Slack', category: 'social', tasks: [
+    { label: 'Sign out all sessions', description: 'Account settings → Security → Devices — sign out all known sessions', url: 'https://app.slack.com/account/settings' },
+    { label: 'Change password', description: 'Use the forgot-password flow to reset', url: 'https://slack.com/forgot-password' },
+    { label: 'Enable 2FA', description: 'Account settings → Two-Factor Authentication', url: 'https://app.slack.com/account/settings#two_factor' },
+    { label: 'Revoke app permissions', description: 'Workspace admin → Manage apps — remove unknown apps', url: 'https://slack.com/apps/manage' },
+    { label: 'Review DMs and channels for unauthorized messages', description: 'Check Direct Messages and channels for messages sent while compromised — notify teammates and delete if possible', url: 'https://app.slack.com/' },
+  ]},
+  { name: 'Steam', category: 'social', tasks: [
+    { label: 'Deauthorize all other devices', description: 'Steam Guard management → Deauthorize all other devices', url: 'https://store.steampowered.com/twofactor/manage' },
+    { label: 'Change password', description: 'Use the account recovery flow to change your password', url: 'https://help.steampowered.com/en/wizard/HelpChangePassword' },
+    { label: 'Enable Steam Guard (2FA)', description: 'Steam Guard management — enable authenticator app', url: 'https://store.steampowered.com/twofactor/manage' },
+    { label: 'Revoke unknown Web API keys', description: 'Steam Community Developer → revoke any unrecognized keys', url: 'https://steamcommunity.com/dev/apikey' },
+    { label: 'Review account purchase history', description: 'Check for unauthorized purchases', url: 'https://store.steampowered.com/account/history/' },
+    { label: 'Review Steam Chat for scam messages sent', description: 'Check Friends list chats for phishing links or scam messages sent while compromised — warn affected friends', url: 'https://steamcommunity.com/chat' },
+  ]},
+  { name: 'Telegram', category: 'social', tasks: [
+    { label: 'Terminate all other sessions', description: 'Settings → Privacy and Security → Active Sessions → Terminate All Other Sessions', url: 'https://web.telegram.org/' },
+    { label: 'Enable Two-Step Verification', description: 'Settings → Privacy and Security → Two-Step Verification — set a strong password', url: 'https://web.telegram.org/' },
+    { label: 'Review active sessions', description: 'Settings → Privacy and Security → Active Sessions — check for unknown devices or locations', url: 'https://web.telegram.org/' },
+    { label: 'Review chats and groups for scam messages sent', description: 'Check recent chats and group channels for scam or phishing messages sent while compromised — warn contacts', url: 'https://web.telegram.org/' },
+    { label: 'Check Privacy settings', description: 'Settings → Privacy and Security — restrict who can see your phone number, profile photo, and last seen', url: 'https://web.telegram.org/' },
+    { label: 'Revoke bot tokens if you own bots', description: 'Open @BotFather → /mybots → select bot → API Token → Revoke current token', url: 'https://t.me/BotFather' },
+  ]},
+  { name: 'GitHub', category: 'dev', tasks: [
+    { label: 'Revoke all active sessions', description: 'Settings → Security → Sessions — revoke all unknown sessions', url: 'https://github.com/settings/security' },
+    { label: 'Change password', description: 'Settings → Password and authentication → Change password', url: 'https://github.com/settings/password' },
+    { label: 'Enable 2FA', description: 'Settings → Password and authentication → Two-factor authentication', url: 'https://github.com/settings/two_factor_authentication/setup/intro' },
+    { label: 'Audit SSH keys', description: 'Settings → SSH and GPG keys — delete unrecognized keys', url: 'https://github.com/settings/keys' },
+    { label: 'Revoke unknown Personal Access Tokens', description: 'Settings → Developer settings → Personal access tokens', url: 'https://github.com/settings/tokens' },
+    { label: 'Revoke unknown OAuth Apps', description: 'Settings → Applications → Authorized OAuth Apps', url: 'https://github.com/settings/applications' },
+    { label: 'Check repo webhooks', description: 'Each repo → Settings → Webhooks — remove unknown ones', url: 'https://github.com/settings/hooks' },
+  ]},
+  { name: 'Salesforce Org', category: 'dev', tasks: [
+    { label: 'Terminate all active sessions', description: 'Setup → Security → Session Management → Remove All Active Sessions', url: null },
+    { label: 'Change password', description: 'Avatar → My Settings → Personal → Change My Password', url: null },
+    { label: 'Enable MFA', description: 'Setup → Identity → Identity Verification — enforce MFA on your user', url: null },
+    { label: 'Revoke OAuth connected apps', description: 'Setup → Connected Apps → OAuth Usage by User — revoke unknown apps', url: null },
+    { label: 'Review login history', description: 'Setup → Users → Login History — check for unexpected logins', url: null },
+    { label: 'Audit Profile & Permission Sets', description: 'Setup → Users → [your user] — verify no new profiles/perms were added', url: null },
+  ]},
+  { name: 'PayPal', category: 'financial', tasks: [
+    { label: 'Log out all devices', description: 'Settings → Security → Log Out of All Devices', url: 'https://www.paypal.com/myaccount/security/login/sessions' },
+    { label: 'Change password', description: 'Settings → Security → Password', url: 'https://www.paypal.com/myaccount/security/password' },
+    { label: 'Enable 2FA', description: 'Settings → Security → 2-step verification', url: 'https://www.paypal.com/myaccount/security/2fa' },
+    { label: 'Review recent transactions', description: 'Look for unauthorized charges — dispute if found', url: 'https://www.paypal.com/myaccount/activities/' },
+    { label: 'Verify linked accounts & cards', description: 'Settings → Payments → Manage payments — remove unknown ones', url: 'https://www.paypal.com/myaccount/money/wallets/cards' },
+  ]},
+  { name: 'Bank / Credit Card', category: 'financial', tasks: [
+    { label: 'Change online banking password', description: 'Use a unique, strong password not used anywhere else', url: null },
+    { label: 'Enable 2FA / transaction alerts', description: 'Set up SMS or email alerts for all transactions', url: null },
+    { label: 'Review recent transactions', description: 'Check for unauthorized charges or withdrawals', url: null },
+    { label: 'Contact bank fraud dept if suspicious', description: 'Report any unauthorized activity immediately', url: null },
+    { label: 'Lock or freeze card if compromised', description: 'Most banking apps allow instant card freeze', url: null },
+  ]},
+  { name: 'Amazon', category: 'financial', tasks: [
+    { label: 'Sign out of all devices', description: 'Account & Lists → Manage Your Content and Devices → Devices — deregister unknown devices', url: 'https://www.amazon.com/hz/mycd/myx#/home/devices/1' },
+    { label: 'Change password', description: 'Account & Lists → Login & security → Edit password', url: 'https://www.amazon.com/ap/cnep' },
+    { label: 'Enable 2-Step Verification', description: 'Login & Security → Two-Step Verification (2SV) Settings', url: 'https://www.amazon.com/a/settings/approval' },
+    { label: 'Review recent orders for fraud', description: 'Check for unauthorized orders — report via Returns & Orders', url: 'https://www.amazon.com/gp/css/order-history' },
+    { label: 'Verify saved payment methods', description: 'Account → Wallet → remove unknown cards or bank accounts', url: 'https://www.amazon.com/cpe/managepaymentmethods' },
+  ]},
+  { name: 'Dropbox', category: 'custom', tasks: [
+    { label: 'Sign out all linked devices', description: 'Security → Devices — click "X" next to each unknown device', url: 'https://www.dropbox.com/account/security#devices' },
+    { label: 'Change password', description: 'Personal → Password — set a new strong password', url: 'https://www.dropbox.com/account/personal#password' },
+    { label: 'Enable 2-step verification', description: 'Security → Two-step verification — use authenticator app', url: 'https://www.dropbox.com/account/security#two-step-verification' },
+    { label: 'Revoke third-party app access', description: 'Connected apps → revoke any unrecognized apps', url: 'https://www.dropbox.com/account/connected_apps' },
+  ]},
+  { name: 'ChatGPT / OpenAI', category: 'custom', tasks: [
+    { label: 'Review account & log out other sessions', description: 'Settings → General — check active devices and log out', url: 'https://chatgpt.com/settings' },
+    { label: 'Change password (email login)', description: 'Use the forgot password flow to reset', url: 'https://auth.openai.com/u/forgot-password' },
+    { label: 'If using SSO, secure source account', description: 'Secure your Google or Microsoft account first (see Email section above)', url: null },
+    { label: 'Revoke API keys', description: 'Platform → API keys — delete all keys and generate new ones', url: 'https://platform.openai.com/api-keys' },
+    { label: 'Audit platform usage & billing', description: 'Platform → Usage — look for unexpected API usage', url: 'https://platform.openai.com/usage' },
+  ]},
+  { name: 'Anthropic / Claude', category: 'custom', tasks: [
+    { label: 'Review account settings', description: 'Claude.ai → Settings — check linked accounts and security', url: 'https://claude.ai/settings' },
+    { label: 'If using SSO, secure source account', description: 'Secure your Google or Microsoft account first (see Email section above)', url: null },
+    { label: 'Revoke API keys', description: 'Anthropic Console → API Keys — delete all keys and issue new ones', url: 'https://console.anthropic.com/settings/keys' },
+    { label: 'Audit API usage for unexpected calls', description: 'Anthropic Console → Usage — verify no unauthorized API activity', url: 'https://console.anthropic.com/settings/usage' },
+    { label: 'Review organization members', description: 'Console → Organization → Members — remove unknown members', url: 'https://console.anthropic.com/settings/organization' },
+  ]},
+];
+
+const CUSTOM_TASKS = [
+  'Sign out all sessions',
+  'Change password',
+  'Enable 2FA',
+  'Review connected apps',
+];
+
+let nextId = 1;
+let services = [];
+let openIds = new Set();
+let showAdd = false;
+let confirming = false;
+let draftName = '';
+
+function buildServices() {
+  nextId = 1;
+  return SEED.map((s, i) => ({
+    id: nextId++,
+    name: s.name,
+    category: s.category,
+    sort_order: i,
+    is_builtin: true,
+    tasks: s.tasks.map(t => ({
+      id: nextId++,
+      label: t.label,
+      description: t.description,
+      url: t.url,
+      completed: false,
+    })),
+  }));
+}
+
+function el(tag, props, children) {
+  const node = document.createElement(tag);
+  if (props) {
+    for (const k in props) {
+      if (k === 'class') node.className = props[k];
+      else if (k === 'text') node.textContent = props[k];
+      else if (k.startsWith('on')) node.addEventListener(k.slice(2), props[k]);
+      else if (props[k] !== null && props[k] !== undefined && props[k] !== false) node.setAttribute(k, props[k]);
+    }
+  }
+  (children || []).forEach(c => { if (c) node.appendChild(c); });
+  return node;
+}
+
+function copyIcon() {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  const path = document.createElementNS(NS, 'path');
+  path.setAttribute('stroke-linecap', 'round');
+  path.setAttribute('stroke-linejoin', 'round');
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('d', 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z');
+  svg.appendChild(path);
+  return svg;
+}
+
+function copyButton(url) {
+  const btn = el('button', { class: 'copy', title: 'Copy link', type: 'button' });
+  const reset = () => {
+    btn.className = 'copy';
+    btn.textContent = '';
+    btn.appendChild(copyIcon());
+    btn.appendChild(document.createTextNode('Copy'));
+  };
+  reset();
+  btn.addEventListener('click', async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch (_) {
+      const ta = el('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      document.body.removeChild(ta);
+    }
+    btn.className = 'copy copied';
+    btn.textContent = '✓ Copied';
+    setTimeout(reset, 1500);
+  });
+  return btn;
+}
+
+function toggleTask(taskId) {
+  for (const s of services) {
+    for (const t of s.tasks) {
+      if (t.id === taskId) { t.completed = !t.completed; render(); return; }
+    }
+  }
+}
+
+function addService(name) {
+  services.push({
+    id: nextId++,
+    name: name,
+    category: 'custom',
+    sort_order: 999,
+    is_builtin: false,
+    tasks: CUSTOM_TASKS.map(label => ({
+      id: nextId++,
+      label: label,
+      description: null,
+      url: null,
+      completed: false,
+    })),
+  });
+}
+
+function deleteService(id) {
+  services = services.filter(s => s.id !== id);
+  openIds.delete(id);
+  render();
+}
+
+function resetAll() {
+  services = buildServices();
+  openIds = new Set();
+  confirming = false;
+  showAdd = false;
+  draftName = '';
+  render();
+}
+
+function renderServiceCard(service) {
+  const done = service.tasks.filter(t => t.completed).length;
+  const total = service.tasks.length;
+  const allDone = total > 0 && done === total;
+  const open = openIds.has(service.id);
+
+  const card = el('div', { class: 'card' + (allDone ? ' all-done' : '') });
+
+  const meta = el('span', { class: 'card-meta' }, [
+    el('span', { class: 'chip' + (allDone ? ' done' : ''), text: done + '/' + total }),
+  ]);
+  if (!service.is_builtin) {
+    meta.appendChild(el('button', {
+      class: 'del',
+      title: 'Remove',
+      type: 'button',
+      text: '×',
+      onclick: e => { e.stopPropagation(); deleteService(service.id); },
+    }));
+  }
+  meta.appendChild(el('span', { class: 'caret', text: open ? '▴' : '▾' }));
+
+  const nameSpan = el('span', { class: 'card-name' });
+  if (allDone) nameSpan.appendChild(el('span', { class: 'check-mark', text: '✓' }));
+  nameSpan.appendChild(document.createTextNode(service.name));
+
+  card.appendChild(el('button', {
+    class: 'card-head',
+    type: 'button',
+    'aria-expanded': String(open),
+    onclick: () => {
+      if (openIds.has(service.id)) openIds.delete(service.id);
+      else openIds.add(service.id);
+      render();
+    },
+  }, [nameSpan, meta]));
+
+  if (open) {
+    const ul = el('ul', { class: 'tasks' });
+    service.tasks.forEach(task => {
+      const li = el('li', { class: task.completed ? 'completed' : '' });
+
+      const box = el('input', { type: 'checkbox' });
+      box.checked = task.completed;
+      box.addEventListener('change', () => toggleTask(task.id));
+
+      let labelNode;
+      if (task.url) {
+        labelNode = el('a', {
+          class: 'task-label',
+          href: task.url,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          text: task.label,
+          onclick: e => e.stopPropagation(),
+        });
+      } else {
+        labelNode = el('span', { class: 'task-label', text: task.label });
+      }
+
+      const row = el('div', { class: 'task-row' }, [
+        el('label', { class: 'task-main' }, [box, labelNode]),
+        task.url ? copyButton(task.url) : null,
+      ]);
+
+      li.appendChild(row);
+      if (task.description) {
+        li.appendChild(el('p', { class: 'task-desc', text: task.description }));
+      }
+      ul.appendChild(li);
+    });
+    card.appendChild(ul);
+  }
+
+  return card;
+}
+
+function renderHeaderActions() {
+  const wrap = document.getElementById('headerActions');
+  wrap.textContent = '';
+  if (confirming) {
+    const span = el('span', { class: 'confirm-wrap' });
+    span.appendChild(document.createTextNode('Reset all progress?'));
+    span.appendChild(el('button', { class: 'btn btn-danger', type: 'button', text: 'Reset', onclick: resetAll }));
+    span.appendChild(el('button', { class: 'btn', type: 'button', text: 'Cancel', onclick: () => { confirming = false; render(); } }));
+    wrap.appendChild(span);
+  } else {
+    wrap.appendChild(el('button', {
+      class: 'btn',
+      type: 'button',
+      text: 'New Incident',
+      onclick: () => { confirming = true; render(); },
+    }));
+  }
+}
+
+function renderProgress() {
+  const allTasks = services.flatMap(s => s.tasks);
+  const doneCount = allTasks.filter(t => t.completed).length;
+  const totalCount = allTasks.length;
+  const pct = totalCount ? (doneCount / totalCount) * 100 : 0;
+  const allClear = totalCount > 0 && doneCount === totalCount;
+
+  const bar = document.getElementById('bar');
+  bar.style.width = pct + '%';
+  bar.className = 'bar' + (allClear ? ' done' : '');
+  document.getElementById('progressLabel').textContent =
+    allClear ? '✅ All clear' : doneCount + ' / ' + totalCount + ' tasks done';
+}
+
+function renderAddSection() {
+  const wrap = el('div', { class: 'add-wrap' });
+  if (showAdd) {
+    const input = el('input', { type: 'text', placeholder: 'Service name (e.g. Dropbox)' });
+    input.value = draftName;
+    input.addEventListener('input', e => { draftName = e.target.value; });
+
+    const form = el('form', {
+      class: 'add-form',
+      onsubmit: e => {
+        e.preventDefault();
+        const name = draftName.trim();
+        if (!name) return;
+        addService(name);
+        draftName = '';
+        showAdd = false;
+        render();
+      },
+    }, [
+      input,
+      el('button', { class: 'btn-primary', type: 'submit', text: 'Add' }),
+      el('button', { class: 'btn-plain', type: 'button', text: 'Cancel', onclick: () => { showAdd = false; draftName = ''; render(); } }),
+    ]);
+    wrap.appendChild(form);
+    setTimeout(() => { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }, 0);
+  } else {
+    wrap.appendChild(el('button', {
+      class: 'btn-add',
+      type: 'button',
+      text: '+ Add Custom Service',
+      onclick: () => { showAdd = true; render(); },
+    }));
+  }
+  return wrap;
+}
+
+function render() {
+  renderHeaderActions();
+  renderProgress();
+
+  const app = document.getElementById('app');
+  app.textContent = '';
+
+  Object.keys(CATEGORIES).forEach(catId => {
+    const list = services.filter(s => s.category === catId);
+    if (!list.length) return;
+    const meta = CATEGORIES[catId];
+    const section = el('section', null, [
+      el('h2', null, [el('span', { text: meta.emoji }), document.createTextNode(meta.label)]),
+    ]);
+    const cards = el('div', { class: 'cards' });
+    list.forEach(s => cards.appendChild(renderServiceCard(s)));
+    section.appendChild(cards);
+    app.appendChild(section);
+  });
+
+  app.appendChild(renderAddSection());
+}
+
+services = buildServices();
+render();
+</script>
+</body>
+</html>
